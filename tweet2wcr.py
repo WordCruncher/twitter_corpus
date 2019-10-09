@@ -184,8 +184,6 @@ for i in json_files:
                 if curr_day not in refDict[curr_year][curr_month]:
                     refDict[curr_year][curr_month].append(curr_day)
                     print(f'<p just="center"><R ref="d,4:{curr_day}"/> {curr_day} {calendarDict[str(curr_month)]} {curr_year}</p>', file=etax_file)
-            # if section_counter == 1 and tweet_counter == 1:
-            #     print(f'<p><R ref="s,5:Section {section_counter}"/> </p>', file=etax_file)
 
             # Output user information.
             print(f'<p st="user"><R ref="t,5:{tweet_counter}" {tweet_attributes}/><T st="U">{char_date(cleaner(name))}</T> <T st="sn">@{cleaner(screen_name)}</T> · <T st="cd">{char_date(creation_date)}</T></p>', file=etax_file)
