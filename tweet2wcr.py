@@ -1,5 +1,14 @@
-import json, re, sys, json, os, glob
-from datetime import datetime
+import datetime
+import glob
+import json
+import math
+import os
+import re
+import subprocess
+import sys
+subprocess.run([sys.executable, '-m', 'pip', 'install', '--user', 'textblob'])
+from textblob import TextBlob
+
 
 calendarDict = {'1': 'January', '2': 'February', '3': 'March', '4': 'April',
                 '5': 'May', '6': 'June', '7': 'July', '8': 'August', '9': 'September',
@@ -29,13 +38,20 @@ print('  <PS st="RT" tSt="RT" dir="ltr" just="full" spB="p:6"/>', file=etax_file
 print('\n  <LEX st="Tweets" id="en" chrBrk="—" chrNobrk="\':/"/>', file=etax_file)
 print('  <LEX st="Retweets" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="Creation Date" tSt="cd" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
+print('  <LEX st="Favorited Count" tSt="m" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="Hashtags" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
+print('  <LEX st="Hashtag Counts" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
+print('  <LEX st="@References" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
+print('  <LEX st="Hyperlinks" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="Language" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="Location" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
+print('  <LEX st="Sentiment Analysis" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
+print('  <LEX st="Subjective Analysis" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="Username" tSt="U" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="User Description" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="User Followers" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="User Post Count" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
+print('  <LEX st="Retweeted Count" tSt="m" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="Screen Name" tSt="sn" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 print('  <LEX st="Metadata" tSt="m" id="en" chrBrk="—" chrNobrk="\'"/>', file=etax_file)
 
@@ -45,6 +61,9 @@ print('  <TS st="m" lexSt="Metadata" tHeight="p:12" clrTxt="0,0,0" fFace="Times 
 print('  <TS st="U" lexSt="Username" tHeight="p:12" clrTxt="0,0,0" fFace="Times New Roman" fFaceSm="Times New Roman" chrProp="bold"/>', file=etax_file)
 print('  <TS st="sn" lexSt="Screen Name" tHeight="p:12" clrTxt="0,0,0" fFace="Times New Roman" fFaceSm="Times New Roman" />', file=etax_file)
 print('  <TS st="cd" lexSt="Creation Date" tHeight="p:12" clrTxt="0,0,0" fFace="Times New Roman" fFaceSm="Times New Roman" />', file=etax_file)
+print('  <TS st="HT" lexSt="Hashtags" tHeight="p:12" clrTxt="0,0,0" fFace="Times New Roman" fFaceSm="Times New Roman" />', file=etax_file)
+print('  <TS st="AT" lexSt="@References" tHeight="p:12" clrTxt="0,0,0" fFace="Times New Roman" fFaceSm="Times New Roman" />', file=etax_file)
+print('  <TS st="HTTP" lexSt="Hyperlinks" tHeight="p:12" clrTxt="0,0,0" fFace="Times New Roman" fFaceSm="Times New Roman" />', file=etax_file)
 
 print('\n  <LVL code="u" name="User" plural="Users" sep=""/>', file=etax_file)
 print('  <LVL code="y" name="Year" plural="Years" sep=": "/>', file=etax_file)
@@ -53,21 +72,33 @@ print('  <LVL code="d" name="Day" plural="Days" sep=" "/>', file=etax_file)
 print('  <LVL code="s" name="Section" plural="Sections" sep=", Sect. "/>', file=etax_file)
 print('  <LVL code="t" name="Tweet" plural="Tweets" sep=" "/>', file=etax_file)
 
-print('\n  <ATTR code="H" lexSt="Hashtags" name="Hashtag" plural="Hashtags" tagtype="H"/>', file=etax_file)
-print('  <ATTR code="L" lexSt="Language" name="Language" plural="Languages" tagtype="L"/>', file=etax_file)
-print('  <ATTR code="l" lexSt="Location" name="Location" plural="Locations" tagtype="l"/>', file=etax_file)
-print('  <ATTR code="D" lexSt="User Description" name="User Description" plural="User Descriptions" tagtype="D"/>', file=etax_file)
+print('\n  <ATTR code="H" lexSt="Metadata" name="Hashtag" plural="Hashtags" tagtype="H"/>', file=etax_file)
+print('\n  <ATTR code="h" lexSt="Hashtag Counts" name="Hashtag Count" plural="Hashtag Counts" tagtype="h"/>', file=etax_file)
 print('  <ATTR code="F" lexSt="User Followers" name="User Follower" plural="User Followers" tagtype="F"/>', file=etax_file)
 print('  <ATTR code="P" lexSt="User Post Count" name="User Post Count" plural="User Post Counts" tagtype="P"/>', file=etax_file)
+print('  <ATTR code="f" lexSt="Favorited Count" name="Favorited Count" plural="Favorited Counts" tagtype="f"/>', file=etax_file)
+print('  <ATTR code="R" lexSt="Retweeted Count" name="Retweeted Count" plural="Retweeted Counts" tagtype="R"/>', file=etax_file)
+print('  <ATTR code="S" lexSt="Sentiment Analysis" name="Sentiment Analysis" plural="Sentiment Analyses" tagtype="S"/>', file=etax_file)
+print('  <ATTR code="s" lexSt="Subjective Analysis" name="Subjective Analysis" plural="Subjective Analyses" tagtype="s"/>', file=etax_file)
 
 print('\n  <TAG code="H" name="Hashtag" plural="Hashtags"/>', file=etax_file)
-print('  <TAG code="L" name="Language" plural="Languages"/>', file=etax_file)
-print('  <TAG code="l" name="Location" plural="Locations"/>', file=etax_file)
-print('  <TAG code="D" name="Description" plural="Descriptions"/>', file=etax_file)
+print('  <TAG code="h" name="Hashtag Count" plural="Hashtag Counts"/>', file=etax_file)
 print('  <TAG code="F" name="User Follower" plural="User Followers"/>', file=etax_file)
 print('  <TAG code="P" name="User Post Count" plural="User Post Counts"/>', file=etax_file)
+print('  <TAG code="f" name="Favorited Count" plural="Favorited Counts"/>', file=etax_file)
+print('  <TAG code="R" name="Retweeted Count" plural="Retweeted Counts"/>', file=etax_file)
+print('  <TAG code="S" name="Sentiment Analysis" plural="Sentiment Analyses"/>', file=etax_file)
+print('  <TAG code="s" name="Subjective Analysis" plural="Sentiment Analyses"/>', file=etax_file)
+
 print('</sifx>', file=etax_file)
 
+print('<p just="center"><T st="m">Twitter Corpus</T></p>', file=etax_file)
+print(f'<p><T st="m">This corpus was compiled on {datetime.datetime.today().strftime("%B %d, %Y")}</T></p>', file=etax_file)
+print(f'<p><T st="m">Sentiment Analysis is a measurement for how positive a text is. The most positive text is 1.0 and the most negative is -1.0.</T></p>', file=etax_file)
+print(f'<p><T st="m">Subjective Analysis is a measurement for how subjective a text is. The most subjective text is 1.0 and the most objective is 0.0.</T></p>', file=etax_file)
+print(f'<p><T st="m"><b>Abbreviations</b>:</T></p>', file=etax_file)
+print(F'<p><T st="m">RTF Ratio: Retweet to Follower Ratio. Take the total of the retweets and divide it by how many followers the person has. Log it and add 14.</T></p>', file=etax_file)
+print(F'<p><T st="m">FTF Ratio: Favorite to Follower Ratio. Take the total of the favorited and divide it by how many followers the person has. Log it and add 14.</T></p>', file=etax_file)
 # Cleans the tweet text generally. Removes unwanted lines, tabs, spaces, etc.
 def cleaner(tweet):
     tweet = re.sub(r'[\n\t\r]', r' ', tweet)
@@ -75,8 +106,10 @@ def cleaner(tweet):
     tweet = re.sub(r'&', r'&amp;', tweet)
     tweet = re.sub(r' \+0000', r'', tweet)
     # These two remove @, #, and links in Twitter from being indexed.
-    tweet = re.sub(r'([#@][^\s]+?)(\s)', r'<x>\1</x>\2', tweet)
-    tweet = re.sub(r'(http[^\s]+?)(\s)', r'<x>\1</x>\2', tweet)
+    tweet = re.sub(r'([#][^\s]+?)(\s)', r'<T st="HT">\1</T>\2', tweet)
+    tweet = re.sub(r'([@][^\s]+?)(\s)', r'<T st="AT">\1</T>\2', tweet)
+    tweet = re.sub(r'(http[^\s]+?)(\s)', r'<T st="HTTP">\1</T>\2', tweet)
+    tweet = re.sub(r'<T</T>', r'</T><T', tweet)
     return tweet
 
 # Cleans the text, so that the sentiment analysis doesn't hit garbage emojis, characters, etc.
@@ -95,13 +128,14 @@ def escape_xml_illegal_chars(val, replacement='?'):
         iBrk = 0
     return illegal_xml_chars.sub(replacement, val)
 
-dateDict = {}
-refDict = {}
-userDict = {}
-
-tweet_counter = 0
-section_counter = 1
 for i in json_files:
+    dateDict = {}
+    refDict = {}
+    userDict = {}
+
+    tweet_counter = 0
+    section_counter = 1
+    print(i)
     with open(i, 'r', encoding='utf-8') as fIn:
         my_input = fIn.read().splitlines()
 
@@ -151,23 +185,37 @@ for i in json_files:
             hashtags = tweetDict['entities']['hashtags'] # Added
             if hashtags:
                 curr_hashtags = [f'H:{i["text"]}' for i in hashtags]
-                hashtag_count = len(curr_hashtags) # TODO Add
+                hashtag_count = len(curr_hashtags)
                 curr_hashtags = (';').join(curr_hashtags)
             else:
                 curr_hashtags = ''
-
+                hashtag_count = 0
+            # Gather Sentiment Analysis
+            sentiment_analysis = round(TextBlob(sentiment_tweet(tweet_text)).polarity, 2)
+            subjectivity_analysis = round(TextBlob(sentiment_tweet(tweet_text)).subjectivity, 2)
+            iBrk = 0
             # Gather attributes.
-            tweet_attributes = f'attr="{curr_hashtags};L:{language};l:{location};D:{user_descript};F:{user_followers};P:{user_posts}"'
+            tweet_attributes = f'attr="{curr_hashtags};F:{user_followers};P:{user_posts};f:{tweet_favorited};R:{tweet_retweeted};S:{sentiment_analysis};s:{subjectivity_analysis};h:{hashtag_count}"'
             tweet_attributes = re.sub(r'";', r'"', tweet_attributes)
             tweet_attributes = re.sub(r';"', r'"', tweet_attributes)
             tweet_attributes = re.sub(r';D:;', r';', tweet_attributes)
             tweet_attributes = re.sub(r';l:;', r';', tweet_attributes)
 
+            if tweet_retweeted / user_followers != 0:
+                rtf_ratio = round(math.log(tweet_retweeted / user_followers) + 14, 1)
+            else:
+                rtf_ratio = 0
+            if tweet_favorited / user_followers != 0:
+                ftf_ratio = round(math.log(tweet_favorited / user_followers) + 14, 1)
+            else:
+                ftf_ratio = 0
+
+
 
             # Add Tree Structure to WordCruncher Book
             if simple_date not in dateDict:
                 dateDict[simple_date] = 1
-                my_datetime = datetime.strptime(simple_date, '%b %d %Y')
+                my_datetime = datetime.datetime.strptime(simple_date, '%b %d %Y')
                 curr_year = my_datetime.year
                 curr_month = my_datetime.month
                 curr_day = my_datetime.day
@@ -183,19 +231,19 @@ for i in json_files:
                     print(f'<p><R ref="m,3:{curr_month}"/> </p>', file=etax_file)
                 if curr_day not in refDict[curr_year][curr_month]:
                     refDict[curr_year][curr_month].append(curr_day)
-                    print(f'<p just="center"><R ref="d,4:{curr_day}"/> {curr_day} {calendarDict[str(curr_month)]} {curr_year}</p>', file=etax_file)
+                    print(f'<p just="center"><R ref="d,4:{curr_day}"/> <T st="m">{curr_day} {calendarDict[str(curr_month)]} {curr_year}</T></p>', file=etax_file)
 
             # Output user information.
-            print(f'<p st="user"><R ref="t,5:{tweet_counter}" {tweet_attributes}/><T st="U">{char_date(cleaner(name))}</T> <T st="sn">@{cleaner(screen_name)}</T> · <T st="cd">{char_date(creation_date)}</T></p>', file=etax_file)
+            print(f'<p st="user"><R ref="t,5:{tweet_counter}" {tweet_attributes}/><T st="U">{char_date(cleaner(name))}</T> <T st="sn">@{cleaner(screen_name)}</T> <T st="m">·</T> <T st="cd">{char_date(creation_date)}</T></p>', file=etax_file)
             # Output tweet information.
             if tweet_text.startswith('RT'):
                 print(f'<p st="RT">{tweet_text}</p>', file=etax_file)
             else:
                 print(f'<p>{tweet_text}</p>', file=etax_file)
             
-            # This is a confirmation that your tweets are being processed.
-            if tweet_counter % 10 == 0:
-                print(f'{tweet_counter} tweets processed.')
+            print(f'<p><T st="m"><b>Retweets</b>:<tab/>{tweet_retweeted}<tab/><b>Favorited</b>:<tab/>{tweet_favorited}<tab/><b>RTF Ratio</b>:<tab/>{rtf_ratio}<tab/><b>FTF Ratio</b>:<tab/>{ftf_ratio}</T></p>', file=etax_file)
+            
+
 
 
 
@@ -203,5 +251,3 @@ print('</etax>', file=etax_file)
 print(f'Your tweets have been saved into {etax}!\nPlease use the WordCruncher Publishing Toolkit to convert this into an .etbu file.')
 
 etax_file.close()
-
-
