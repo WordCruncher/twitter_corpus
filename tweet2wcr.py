@@ -161,8 +161,6 @@ for i in json_files:
             name = tweetDict['user']['name']
             screen_name = tweetDict['user']['screen_name']
             location = tweetDict['user']['location']
-            user_descript = tweetDict['user']['description']
-            user_descript = re.sub(r';', '.', user_descript)
             user_followers = tweetDict['user']['followers_count']
             user_posts = tweetDict['user']['statuses_count']
             user_since = re.sub(r'\w{3} (\w{3} \d{2}) \d{2}:\d{2}:\d{2} \+0000 (\d{4})', r'\1 \2', tweetDict['user']['created_at'])
@@ -201,17 +199,17 @@ for i in json_files:
             tweet_attributes = re.sub(r';D:;', r';', tweet_attributes)
             tweet_attributes = re.sub(r';l:;', r';', tweet_attributes)
 
-            if tweet_retweeted / user_followers != 0:
-                rtf_ratio = round(math.log(tweet_retweeted / user_followers) + 14, 1)
+            if user_followers == 0:
+                rtf_ratio = 'Invalid'
             else:
-                rtf_ratio = 0
-            if tweet_favorited / user_followers != 0:
-                ftf_ratio = round(math.log(tweet_favorited / user_followers) + 14, 1)
-            else:
-                ftf_ratio = 0
-
-
-
+                if tweet_retweeted / user_followers != 0:
+                    rtf_ratio = round(math.log(tweet_retweeted / user_followers) + 14, 1)
+                else:
+                    rtf_ratio = 0
+                if tweet_favorited / user_followers != 0:
+                    ftf_ratio = round(math.log(tweet_favorited / user_followers) + 14, 1)
+                else:
+                    ftf_ratio = 0
             # Add Tree Structure to WordCruncher Book
             if simple_date not in dateDict:
                 dateDict[simple_date] = 1
@@ -234,7 +232,7 @@ for i in json_files:
                     print(f'<p just="center"><R ref="d,4:{curr_day}"/> <T st="m">{curr_day} {calendarDict[str(curr_month)]} {curr_year}</T></p>', file=etax_file)
 
             # Output user information.
-            print(f'<p st="user"><R ref="t,5:{tweet_counter}" {tweet_attributes}/><T st="U">{char_date(cleaner(name))}</T> <T st="sn">@{cleaner(screen_name)}</T> <T st="m">·</T> <T st="cd">{char_date(creation_date)}</T></p>', file=etax_file)
+            print(f'<p st="user"><R ref="t,5:{tweet_counter}" {tweet_attributes}/><T st="U">{cleaner(name)}</T> <T st="sn">@{cleaner(screen_name)}</T> <T st="m">·</T> <T st="cd">{char_date(creation_date)}</T></p>', file=etax_file)
             # Output tweet information.
             if tweet_text.startswith('RT'):
                 print(f'<p st="RT">{tweet_text}</p>', file=etax_file)
