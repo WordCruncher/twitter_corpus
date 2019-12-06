@@ -4,16 +4,13 @@ import json
 import math
 import os
 import re
-import subprocess
-import sys
-subprocess.run([sys.executable, '-m', 'pip', 'install', '--user', 'textblob'])
 from textblob import TextBlob
 
 
 calendarDict = {'1': 'January', '2': 'February', '3': 'March', '4': 'April',
                 '5': 'May', '6': 'June', '7': 'July', '8': 'August', '9': 'September',
                 '10': 'October', '11': 'November', '12': 'December'}
-                
+
 directory = os.path.dirname(os.path.realpath(__file__))
 directory = re.sub(r'\\', r'/', directory)
 directory = directory + '/'
@@ -100,6 +97,8 @@ print(f'<p><T st="m"><b>Abbreviations</b>:</T></p>', file=etax_file)
 print(F'<p><T st="m">RTF Ratio: Retweet to Follower Ratio. Take the total of the retweets and divide it by how many followers the person has. Log it and add 14.</T></p>', file=etax_file)
 print(F'<p><T st="m">FTF Ratio: Favorite to Follower Ratio. Take the total of the favorited and divide it by how many followers the person has. Log it and add 14.</T></p>', file=etax_file)
 # Cleans the tweet text generally. Removes unwanted lines, tabs, spaces, etc.
+
+
 def cleaner(tweet):
     tweet = re.sub(r'[\n\t\r]', r' ', tweet)
     tweet = re.sub(r' {2,100}', r' ', tweet)
@@ -113,8 +112,11 @@ def cleaner(tweet):
     return tweet
 
 # Cleans the text, so that the sentiment analysis doesn't hit garbage emojis, characters, etc.
+
+
 def sentiment_tweet(tweet):
-    return ' '.join(re.sub(r'(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)', r' ', tweet).split()) 
+    return ' '.join(re.sub(r'(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)', r' ', tweet).split())
+
 
 def char_date(date):
     date = re.sub(r' ', r'<sp/>', date)
@@ -123,10 +125,13 @@ def char_date(date):
 
 
 illegal_xml_chars = re.compile(u'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
+
+
 def escape_xml_illegal_chars(val, replacement='?'):
     if re.search(illegal_xml_chars, val):
         iBrk = 0
     return illegal_xml_chars.sub(replacement, val)
+
 
 for i in json_files:
     dateDict = {}
@@ -146,7 +151,6 @@ for i in json_files:
                 print(f'<p><R ref="s,4:Section {section_counter}"/> </p>', file=etax_file)
 
             tweetDict = json.loads(tweet)
-
 
             # Collect the language of the tweet.
             language = tweetDict['lang']
@@ -180,7 +184,7 @@ for i in json_files:
             tweet_retweeted = tweetDict['retweet_count']
 
             # Collect hashtags.
-            hashtags = tweetDict['entities']['hashtags'] # Added
+            hashtags = tweetDict['entities']['hashtags']  # Added
             if hashtags:
                 curr_hashtags = [f'H:{i["text"]}' for i in hashtags]
                 hashtag_count = len(curr_hashtags)
@@ -238,11 +242,8 @@ for i in json_files:
                 print(f'<p st="RT">{tweet_text}</p>', file=etax_file)
             else:
                 print(f'<p>{tweet_text}</p>', file=etax_file)
-            
+
             print(f'<p><T st="m"><b>Retweets</b>:<tab/>{tweet_retweeted}<tab/><b>Favorited</b>:<tab/>{tweet_favorited}<tab/><b>RTF Ratio</b>:<tab/>{rtf_ratio}<tab/><b>FTF Ratio</b>:<tab/>{ftf_ratio}</T></p>', file=etax_file)
-            
-
-
 
 
 print('</etax>', file=etax_file)
