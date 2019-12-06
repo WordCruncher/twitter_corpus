@@ -4,9 +4,6 @@ import json
 import math
 import os
 import re
-import subprocess
-import sys
-subprocess.run([sys.executable, '-m', 'pip', 'install', '--user', 'textblob'])
 from textblob import TextBlob
 
 
